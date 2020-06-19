@@ -1,0 +1,77 @@
+version: '3.3'
+
+services:
+
+  brillderElastic:
+    container_name: elasticsearch
+    image: elasticsearch:7.7.1
+    environment:
+      - node.name=brillderElastic01
+      - cluster.name=docker-cluster
+      - bootstrap.memory_lock=false
+      - discovery.seed_hosts=brillderElastic01
+      - cluster.initial_master_nodes=brillderElastic01
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+      - xpack.watcher.enabled=false
+    volumes:
+      - es_data:/var/lib/elasticsearch
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 262144
+        hard: 262144
+    ports:
+      - 9200:9200
+    restart: always
+    # command: "sysctl -w vm.max_map_count=262144 "
+  brillderMariaDb:
+    image: mariadb
+    volumes:
+      - db_data:/var/lib/mariadb
+    restart: always
+    environment:
+      MYSQL_DATABASE: s6
+      MYSQL_USER: root
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+  brillderRedis:
+    image: redis
+    volumes:
+      - rd_data:/var/lib/redis
+    restart: always
+  brillderBackend:
+    depends_on:
+      - brillderMariaDb
+      - brillderRedis
+      - brillderElastic
+    command: sh -c "/wait && npm run run-migration; npm run dev"
+    image: scholar6org/brillder-backend:latest
+    ports:
+      - "32222:5000"
+    restart: always
+    environment:
+      TYPEORM_HOST: brillderMariaDb
+      REDIS_HOST: brillderRedis
+      ELASTIC_HOST: http://brillderElastic:9200
+      WAIT_HOSTS: brillderMariaDb:3306, brillderRedis:6379, brillderElastic:9200
+      WAIT_HOSTS_TIMEOUT: 300
+      WAIT_SLEEP_INTERVAL: 5
+      WAIT_HOST_CONNECT_TIMEOUT: 5
+    ## update with path to the project, if you want to watch filechanges.
+    ## nodemon will not be able to watch chagnes if WLS2 is used as VM. Switch to Hyper-V.
+    # volumes:
+    #   - /C/brillder-backend:/usr/backend
+  brillderFrontend:
+    image: scholar6org/brillder-frontend:latest
+    ports:
+      - "32221:3000"
+    restart: always
+    ## update with path to the project, if you want to watch filechanges.
+    # volumes:
+    #   - /C/brillder-frontend:/usr/backend
+volumes:
+    db_data: {}
+    es_data: {}
+    rd_data: {}
