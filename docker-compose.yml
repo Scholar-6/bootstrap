@@ -74,7 +74,7 @@ services:
     ## update with path to the project, if you want to watch filechanges.
     ## nodemon will not be able to watch chagnes if WLS2 is used as VM. Switch to Hyper-V.
     volumes:
-      - /C/Freelance/Scholar 6/Projects/brillder-backend:/usr/backend
+      # - /C/Freelance/Scholar 6/Projects/brillder-backend:/usr/backend
   brillderFrontend:
     container_name: brillderFrontend
     image: scholar6org/brillder-frontend:dev
