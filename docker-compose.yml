@@ -73,7 +73,7 @@ services:
       WAIT_HOST_CONNECT_TIMEOUT: 5
     ## update with path to the project, if you want to watch filechanges.
     ## nodemon will not be able to watch chagnes if WLS2 is used as VM. Switch to Hyper-V.
-    volumes:
+    # volumes:
       # - /C/Freelance/Scholar 6/Projects/brillder-backend:/usr/backend
   brillderFrontend:
     container_name: brillderFrontend
