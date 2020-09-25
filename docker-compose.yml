@@ -12,6 +12,7 @@ services:
     container_name: elasticsearch
     image: elasticsearch:7.8.0
     environment:
+      - node.store.allow_mmap=false
       - node.name=brillderElastic01
       - cluster.name=docker-cluster
       - bootstrap.memory_lock=false
@@ -84,9 +85,10 @@ services:
     ports:
       - "32221:3000"
     restart: always
+    stdin_open: true
     ## update with path to the project, if you want to watch filechanges.
-    # volumes:
-    #   - /C/brillder-frontend:/usr/backend
+    #volumes:
+      #- /C/brillder-frontend:/usr/backend
 volumes:
     db_data: {}
     es_data: {}
