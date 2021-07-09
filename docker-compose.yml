@@ -2,6 +2,7 @@ version: '3.3'
 
 services:
   kibana:
+    container_name: kibana
     image: docker.elastic.co/kibana/kibana:7.8.0
     ports:
       - 5601:5601
@@ -21,6 +22,8 @@ services:
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
       - xpack.security.enabled=false
       - xpack.watcher.enabled=false
+      - http.cors.enabled=true
+      - http.cors.allow-origin=/.*/
     volumes:
       - es_data:/var/lib/elasticsearch
     ulimits:
@@ -34,12 +37,20 @@ services:
       - 9200:9200
     restart: always
     # command: "sysctl -w vm.max_map_count=262144"
+  elasticvue:
+    container_name: elasticvue
+    image: cars10/elasticvue 
+    restart: always
+    ports:
+      - 9201:8080
   brillderMariaDb:
     container_name: mariadb
     image: mariadb
     volumes:
       - db_data:/var/lib/mariadb
     restart: always
+    ports:
+      - 3306:3306
     environment:
       MYSQL_DATABASE: s6
       MYSQL_USER: root
@@ -50,45 +61,45 @@ services:
     volumes:
       - rd_data:/var/lib/redis
     restart: always
-  brillderBackend:
-    container_name: brillderBackend
-    depends_on:
-      - brillderMariaDb
-      - brillderRedis
-      - brillderElastic
-    command: sh -c "/wait && npm run run-migration; npm run dev"
-    image: scholar6org/brillder-backend:dev
-    ports:
-      - "32222:5000"
-      - "9222:9222"
-      - "9229:9229"
-      - "5858:5858"
-    restart: always
-    environment:
-      TYPEORM_HOST: brillderMariaDb
-      REDIS_HOST: brillderRedis
-      ELASTIC_HOST: http://brillderElastic:9200
-      WAIT_HOSTS: brillderMariaDb:3306, brillderRedis:6379, brillderElastic:9200
-      WAIT_HOSTS_TIMEOUT: 300
-      WAIT_SLEEP_INTERVAL: 5
-      WAIT_HOST_CONNECT_TIMEOUT: 5
-    ## update with path to the project, if you want to watch filechanges.
-    ## nodemon will not be able to watch chagnes if WLS2 is used as VM. Switch to Hyper-V.
-    # volumes:
-      # - /C/Freelance/Scholar 6/Projects/brillder-backend:/usr/backend
-  brillderFrontend:
-    container_name: brillderFrontend
-    image: scholar6org/brillder-frontend:dev
-    environment:
-      REACT_APP_VERSION: $npm_package_version
-      REACT_APP_BACKEND_HOST: http://localhost:32222
-    ports:
-      - "32221:3000"
-    restart: always
-    stdin_open: true
-    ## update with path to the project, if you want to watch filechanges.
-    #volumes:
-      #- /C/brillder-frontend:/usr/backend
+  # brillderBackend:
+  #   container_name: brillderBackend
+  #   depends_on:
+  #     - brillderMariaDb
+  #     - brillderRedis
+  #     - brillderElastic
+  #   command: sh -c "/wait && npm run run-migration; npm run dev"
+  #   image: scholar6org/brillder-backend:dev
+  #   ports:
+  #     - "32222:5000"
+  #     - "9222:9222"
+  #     - "9229:9229"
+  #     - "5858:5858"
+  #   restart: always
+  #   environment:
+  #     TYPEORM_HOST: brillderMariaDb
+  #     REDIS_HOST: brillderRedis
+  #     ELASTIC_HOST: http://brillderElastic:9200
+  #     WAIT_HOSTS: brillderMariaDb:3306, brillderRedis:6379, brillderElastic:9200
+  #     WAIT_HOSTS_TIMEOUT: 300
+  #     WAIT_SLEEP_INTERVAL: 5
+  #     WAIT_HOST_CONNECT_TIMEOUT: 5
+  #   ## update with path to the project, if you want to watch filechanges.
+  #   ## nodemon will not be able to watch chagnes if WLS2 is used as VM. Switch to Hyper-V.
+  #   # volumes:
+  #     # - /C/Freelance/Scholar 6/Projects/brillder-backend:/usr/backend
+  # brillderFrontend:
+  #   container_name: brillderFrontend
+  #   image: scholar6org/brillder-frontend:dev
+  #   environment:
+  #     REACT_APP_VERSION: $npm_package_version
+  #     REACT_APP_BACKEND_HOST: http://localhost:32222
+  #   ports:
+  #     - "32221:3000"
+  #   restart: always
+  #   stdin_open: true
+  #   ## update with path to the project, if you want to watch filechanges.
+  #   #volumes:
+  #     #- /C/brillder-frontend:/usr/backend
 
   mongo:
     container_name: mongo
@@ -116,7 +127,6 @@ services:
       ME_CONFIG_MONGODB_AUTH_DATABASE: admin
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: pass
-      ME_CONFIG_MONGODB_ENABLE_ADMIN: true
 volumes:
     db_data: {}
     es_data: {}
